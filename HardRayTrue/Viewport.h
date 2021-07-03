@@ -8,9 +8,8 @@ class Viewport
 	sf::Vector2f size;
 	float distanceToCamera;
 
-	Vector3f getPosFromCanvasPos(const Canvas &canvas, const sf::Vector2f &pos);
-
 public:
+	Vector3f getPosFromCanvasPos(const Canvas& canvas, const sf::Vector2f& pos) const;
 	Viewport(sf::Vector2f size, float distanceToCamera): size {size}, distanceToCamera { distanceToCamera } {}
 	~Viewport() {}
 };

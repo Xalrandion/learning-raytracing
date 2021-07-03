@@ -5,6 +5,8 @@
 #include "includes/Canvas.h"
 #include "Viewport.h"
 
+constexpr auto RAY_MAX = 2000000000;
+constexpr auto RAY_MIN = -2000000000;
 
 void drawCanvas(sf::RenderWindow& target, const Canvas &canvas) {
 
@@ -20,6 +22,16 @@ sf::VideoMode getScreenPercentageMode(float percent) {
     return sf::VideoMode(width, height);
 }
 
+void drawScene(Canvas &canvas, const Viewport &viewport, const Vector3f &origin) {
+
+    auto currentPos = sf::Vector2f(0, 0); 
+    for (currentPos.x = (canvas.getSize().x / 2) * -1; currentPos.x < canvas.getSize().x / 2; currentPos.x++) {
+        for (currentPos.y = (canvas.getSize().y / 2) * -1; currentPos.y < canvas.getSize().y / 2; currentPos.y++) {
+
+            auto viewportPos = viewport.getPosFromCanvasPos(canvas, currentPos);
+        }
+    }
+}
 
 int main()
 {
