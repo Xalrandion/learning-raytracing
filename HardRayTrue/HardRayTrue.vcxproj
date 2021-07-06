@@ -148,10 +148,17 @@
   <ItemGroup>
     <ClCompile Include="HardRayTrue.cpp" />
     <ClCompile Include="includes\Canvas.cpp" />
+    <ClCompile Include="Object.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="Sphere.cpp" />
+    <ClCompile Include="Vector.cpp" />
     <ClCompile Include="Viewport.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="includes\Canvas.h" />
+    <ClInclude Include="Object.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="Sphere.h" />
     <ClInclude Include="Vector.h" />
     <ClInclude Include="Viewport.h" />
   </ItemGroup>
