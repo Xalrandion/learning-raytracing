@@ -7,9 +7,8 @@
 #include "includes/Canvas.h"
 #include "Viewport.h"
 #include "Scene.h"
-
-constexpr auto RAY_MAX = 2000000000;
-constexpr auto RAY_MIN = -2000000000;
+#include "Constant.h"
+#include "Calculations.h"
 
 sf::Color BG_COLOR = sf::Color::White;
 
@@ -27,57 +26,58 @@ sf::VideoMode getScreenPercentageMode(float percent) {
     return sf::VideoMode(height, height);
 }
 
-std::pair<float, float> intersectSphere(const Vector3f& origin, const Vector3f& viewportPos, const Sphere& sphere) {
 
-    Eigen::Vector3f co = origin.toEigen() - sphere.pos.toEigen();
-    // ax² + bx + c  
+float computeLightning(Scene scene, const Vector3f &targetPos, const Vector3f &tagetNormale, const Vector3f &viewVector, float specularExponent) {
 
-    auto a = viewportPos.toEigen().dot(viewportPos.toEigen());
-    auto b = 2 * (co.dot(viewportPos.toEigen()));
-    auto c = co.dot(co) - (sphere.radius * sphere.radius);
-
-    // b² - 4ac
-    auto delta = (b * b) - (4 * a * c);
-    if (delta < 0) return std::pair<float, float>(RAY_MAX, RAY_MAX);
-
-    // solutions
-    return std::pair<float, float>(((b * -1) + (sqrt(delta)) / (2 * a)), ((b * -1) - (sqrt(delta)) / (2 * a)));
-}
-
-bool isBeetween(float x, float min, float max) {
-    return x >= min && x <= max;
+    float intensity = 0;
+    for (auto it = scene.lights.begin(); it != scene.lights.end(); ++it) {
+        auto i = (*it)->computeLightIntensity(targetPos, tagetNormale, viewVector, specularExponent, scene.objects);
+        intensity += i;
+    }
+    return intensity;
 }
 
 sf::Color traceRay(const Vector3f& origin, const Vector3f& viewportPos, const Scene &scene, int rayMinSize, int rayMaxSize) {
 
-    auto rayClosestCollistion = rayMaxSize;
-    Sphere closestSphere;
-    auto isSphereFound = false;
 
-    for (auto it = scene.objects.begin(); it != scene.objects.end(); ++it) {
+    auto closestInteraction = computeClosestInteraction(origin, viewportPos, scene.objects, rayMinSize, rayMaxSize);
+    if (!closestInteraction) return BG_COLOR;
 
-        auto intersections = intersectSphere(origin, viewportPos, *it);
-        if (isBeetween(intersections.first, rayMinSize, rayMaxSize) && intersections.first < rayClosestCollistion) {
-            rayClosestCollistion = intersections.first;
-            closestSphere = *it;
-            isSphereFound = true;
-        }
-        if (isBeetween(intersections.second, rayMinSize, rayMaxSize) && intersections.second < rayClosestCollistion) {
-            rayClosestCollistion = intersections.second;
-            closestSphere = *it;
-            isSphereFound = true;
-        }
+    auto rayClosestCollistion = closestInteraction->second;
+    auto closestSphere = closestInteraction->first;
 
-    }
-    if (!isSphereFound) return BG_COLOR;
-    return closestSphere.color;
+    auto eiViewportPos = viewportPos.toEigen();
+    auto eiClosestSphereIntersesctPos = origin.toEigen() + ((float)rayClosestCollistion * eiViewportPos);
+    auto eiClosestSphereNormaleAtPos = eiClosestSphereIntersesctPos - closestSphere.pos.toEigen();
+    auto eiClosestSphereNormaleAtPosNormalized =  eiClosestSphereNormaleAtPos / eiClosestSphereNormaleAtPos.norm();
+
+    
+    sf::Color color(closestSphere.color);
+    
+    auto intensity = computeLightning(scene, Vector3f::fromEigen(eiClosestSphereIntersesctPos), Vector3f::fromEigen(eiClosestSphereNormaleAtPosNormalized), Vector3f::fromEigen(eiViewportPos * -1), closestSphere.specular);
+
+
+
+    float r = (float)color.r * intensity;
+    float g = (float)color.g * intensity;
+    float b = (float)color.b * intensity;
+
+    // std::cout << "intensity: " << intensity << " r: " << r << " g: " << g << " b: " << b << std::endl;
+    
+
+    r = r > 0 ? r : 0;
+    g = g > 0 ? g : 0;
+    b = b > 0 ? b : 0;
+    color.r = r > 255 ? 255 : r;
+    color.g = g > 255 ? 255 : g;
+    color.b = b > 255 ? 255 : b;
+
+    return color;
 }
 
 void drawScene(Canvas &canvas, const Viewport &viewport, const Vector3f &origin, const Scene &scene) {
 
     auto currentCanvasPos = sf::Vector2f(0, 0); 
-    currentCanvasPos.x = ((float)canvas.getSize().x / 2) * -1;
-    auto s2 = currentCanvasPos.x < canvas.getSize().x / 2;
     for (currentCanvasPos.x = ((float)canvas.getSize().x / 2) * -1; currentCanvasPos.x < canvas.getSize().x / 2; currentCanvasPos.x++) {
         for (currentCanvasPos.y = ((float)canvas.getSize().y / 2) * -1; currentCanvasPos.y < canvas.getSize().y / 2; currentCanvasPos.y++) {
 
@@ -91,7 +91,7 @@ void drawScene(Canvas &canvas, const Viewport &viewport, const Vector3f &origin,
 int main()
 {
 
-    sf::RenderWindow window(getScreenPercentageMode(65), "Some hardcore rays if you ask me");
+    sf::RenderWindow window(getScreenPercentageMode(60), "Some hardcore rays if you ask me");
     
     Canvas canvas(window.getSize().x, window.getSize().y);
 
@@ -99,14 +99,20 @@ int main()
     Vector3f origin(0, 0, 0);
     Scene scene; 
 
-    scene.objects.push_back(Sphere(Vector3f(0, -1, 3), 1, sf::Color::Red));
-    scene.objects.push_back(Sphere(Vector3f(2, 0, 4), 1, sf::Color::Blue));
-    scene.objects.push_back(Sphere(Vector3f(-2, 0, 4), 1, sf::Color::Cyan));
+    scene.objects.push_back(Sphere(Vector3f(0, -1, 3), 1, sf::Color::Red, 500));
+    scene.objects.push_back(Sphere(Vector3f(2, 0, 4), 1, sf::Color::Blue, 500));
+    scene.objects.push_back(Sphere(Vector3f(-2, 0, 4), 1, sf::Color::Green, 10));
+    scene.objects.push_back(Sphere(Vector3f(0, -5001, 0), 5000, sf::Color::Yellow, 1000));
+    scene.lights.push_back(new AmbiantLight(0.2));
+    scene.lights.push_back(new PointLight(Vector3f(2, 1, 0), 0.6));
+    scene.lights.push_back(new DirectionalLight(Vector3f(1, 4, 4), 0.2));
    
 
     canvas.clear();
+
     drawScene(canvas, viewport, origin, scene); 
     std::cout << "render done" << std::endl;
+
 
     while (window.isOpen())
     {
@@ -119,6 +125,7 @@ int main()
 
         window.clear();
         drawCanvas(window, canvas);
+
         window.display();
     }
 

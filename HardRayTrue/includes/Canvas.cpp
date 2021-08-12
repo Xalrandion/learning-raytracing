@@ -33,7 +33,7 @@ Canvas::~Canvas() { }
 
 sf::Vector2f Canvas::translateToTexturePosition(const sf::Vector2f& position)
 {
-	return sf::Vector2f((textureSize.x / 2) + position.x, (textureSize.y / 2) - position.y);
+	return sf::Vector2f((textureSize.x / 2) + position.x, (textureSize.y / 2) + position.y);
 }
 		
 bool Canvas::validateTexturePosition(const sf::Vector2f& pos)

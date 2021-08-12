@@ -9,7 +9,8 @@ class Sphere: public Object
 public:
 	float radius;
 	sf::Color color;
-	Sphere() : Object(), radius(0), color(0) {}
-	Sphere(Vector3f pos, float radius, sf::Color color) : Object(pos), radius{ radius }, color{color} {}
+	float specular;
+	Sphere() : Object(), radius(0), color(0), specular(0) {}
+	Sphere(Vector3f pos, float radius, sf::Color color, float specular) : Object(pos), radius{ radius }, color{ color }, specular{ specular } {}
 };
 

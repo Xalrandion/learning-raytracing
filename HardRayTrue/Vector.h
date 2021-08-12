@@ -16,7 +16,9 @@ public:
 
 class Vector3f
 {
+
 public: 
+	static Vector3f fromEigen(Eigen::Vector3f v);
 	Vector3f(float _x, float _y, float _z) : x{ _x }, y{ _y }, z{ _z } {}
 	Vector3f() : Vector3f(0, 0, 0) {}
 	Eigen::Vector3f toEigen() const;
