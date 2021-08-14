@@ -10,7 +10,7 @@
 #include "Constant.h"
 #include "Calculations.h"
 
-sf::Color BG_COLOR = sf::Color::White;
+sf::Color BG_COLOR = sf::Color::Black;
 
 void drawCanvas(sf::RenderWindow& target, const Canvas &canvas) {
 
@@ -37,7 +37,17 @@ float computeLightning(Scene scene, const Vector3f &targetPos, const Vector3f &t
     return intensity;
 }
 
-sf::Color traceRay(const Vector3f& origin, const Vector3f& viewportPos, const Scene &scene, int rayMinSize, int rayMaxSize) {
+sf::Uint8 clampColorComponent(float colorComponent) {
+    return colorComponent < 0 ? 0 : colorComponent > 255 ? 255 : colorComponent;
+}
+
+sf::Color generateClampedColor(float r, float g, float b) {
+
+    return sf::Color(clampColorComponent(r), clampColorComponent(g), clampColorComponent(b));
+}
+
+
+sf::Color traceRay(const Vector3f& origin, const Vector3f& viewportPos, const Scene &scene, float rayMinSize, float rayMaxSize, int depth) {
 
 
     auto closestInteraction = computeClosestInteraction(origin, viewportPos, scene.objects, rayMinSize, rayMaxSize);
@@ -52,27 +62,24 @@ sf::Color traceRay(const Vector3f& origin, const Vector3f& viewportPos, const Sc
     auto eiClosestSphereNormaleAtPosNormalized =  eiClosestSphereNormaleAtPos / eiClosestSphereNormaleAtPos.norm();
 
     
-    sf::Color color(closestSphere.color);
+    sf::Color baseColor(closestSphere.color);
     
     auto intensity = computeLightning(scene, Vector3f::fromEigen(eiClosestSphereIntersesctPos), Vector3f::fromEigen(eiClosestSphereNormaleAtPosNormalized), Vector3f::fromEigen(eiViewportPos * -1), closestSphere.specular);
+    sf::Color localColor = generateClampedColor((float)baseColor.r * intensity, (float)baseColor.g * intensity, (float)baseColor.b * intensity);
 
-
-
-    float r = (float)color.r * intensity;
-    float g = (float)color.g * intensity;
-    float b = (float)color.b * intensity;
-
-    // std::cout << "intensity: " << intensity << " r: " << r << " g: " << g << " b: " << b << std::endl;
-    
-
-    r = r > 0 ? r : 0;
-    g = g > 0 ? g : 0;
-    b = b > 0 ? b : 0;
-    color.r = r > 255 ? 255 : r;
-    color.g = g > 255 ? 255 : g;
-    color.b = b > 255 ? 255 : b;
-
-    return color;
+    if (closestSphere.reflectivness <= 0 || depth <= 0) return localColor;
+   
+    auto reflectedColor = traceRay(Vector3f::fromEigen(eiClosestSphereIntersesctPos),
+        reflectRay(Vector3f::fromEigen(viewportPos.toEigen() * -1), Vector3f::fromEigen(eiClosestSphereNormaleAtPosNormalized)),
+        scene,
+        0.001f, 
+        RAY_MAX, 
+        depth - 1);
+    return generateClampedColor(
+        (float)localColor.r * (1.0f - closestSphere.reflectivness) + (float)reflectedColor.r * closestSphere.reflectivness,
+        (float)localColor.g * (1.0f - closestSphere.reflectivness) + (float)reflectedColor.g * closestSphere.reflectivness,
+        (float)localColor.b * (1.0f - closestSphere.reflectivness) + (float)reflectedColor.b * closestSphere.reflectivness
+        );
 }
 
 void drawScene(Canvas &canvas, const Viewport &viewport, const Vector3f &origin, const Scene &scene) {
@@ -82,8 +89,9 @@ void drawScene(Canvas &canvas, const Viewport &viewport, const Vector3f &origin,
         for (currentCanvasPos.y = ((float)canvas.getSize().y / 2) * -1; currentCanvasPos.y < canvas.getSize().y / 2; currentCanvasPos.y++) {
 
             auto viewportPos = viewport.getPosFromCanvasPos(canvas, currentCanvasPos);
-            auto color = traceRay(origin, viewportPos, scene, 1, RAY_MAX);
+            auto color = traceRay(origin, viewportPos, scene, 1, RAY_MAX, 3);
             canvas.putPixel(currentCanvasPos, color); 
+            //std::cout << "Pixex [" << currentCanvasPos.x << "; " << currentCanvasPos.y << "] drawn." << std::endl;
         }
     }
 }
@@ -91,7 +99,7 @@ void drawScene(Canvas &canvas, const Viewport &viewport, const Vector3f &origin,
 int main()
 {
 
-    sf::RenderWindow window(getScreenPercentageMode(60), "Some hardcore rays if you ask me");
+    sf::RenderWindow window(getScreenPercentageMode(50), "Some hardcore rays if you ask me");
     
     Canvas canvas(window.getSize().x, window.getSize().y);
 
@@ -99,10 +107,10 @@ int main()
     Vector3f origin(0, 0, 0);
     Scene scene; 
 
-    scene.objects.push_back(Sphere(Vector3f(0, -1, 3), 1, sf::Color::Red, 500));
-    scene.objects.push_back(Sphere(Vector3f(2, 0, 4), 1, sf::Color::Blue, 500));
-    scene.objects.push_back(Sphere(Vector3f(-2, 0, 4), 1, sf::Color::Green, 10));
-    scene.objects.push_back(Sphere(Vector3f(0, -5001, 0), 5000, sf::Color::Yellow, 1000));
+    scene.objects.push_back(Sphere(Vector3f(0, -1, 3), 1, sf::Color::Red, 500, 0.2));
+    scene.objects.push_back(Sphere(Vector3f(2, 0, 4), 1, sf::Color::Blue, 500, 0.3));
+    scene.objects.push_back(Sphere(Vector3f(-2, 0, 4), 1, sf::Color::Green, 10, 0.4));
+    scene.objects.push_back(Sphere(Vector3f(0, -5001, 0), 5000, sf::Color::Yellow, 1000, 0.5));
     scene.lights.push_back(new AmbiantLight(0.2));
     scene.lights.push_back(new PointLight(Vector3f(2, 1, 0), 0.6));
     scene.lights.push_back(new DirectionalLight(Vector3f(1, 4, 4), 0.2));

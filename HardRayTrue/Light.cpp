@@ -8,7 +8,7 @@ float Light::computeSpecularIntensity(Vector3f rayDir, Vector3f targetPos, Vecto
 {
 	if (specularExponent < 0) return 0;
 
-	auto reflectionVector = (2  * targetNormale.toEigen().dot(rayDir.toEigen()) * targetNormale.toEigen()) - rayDir.toEigen();
+	auto reflectionVector = reflectRay(rayDir, targetNormale).toEigen();
 	auto r_dot_viewV = reflectionVector.dot(viewVector.toEigen());
 	
 	if (r_dot_viewV <= 0) return 0;

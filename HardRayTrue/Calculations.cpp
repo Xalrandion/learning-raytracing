@@ -1,6 +1,13 @@
 #include "Calculations.h"
 #include "Constant.h"
 
+Vector3f reflectRay(Vector3f ray, Vector3f reflectBase) {
+
+    auto eiRay = ray.toEigen();
+    auto eiReflectBase = reflectBase.toEigen();
+    return Vector3f::fromEigen(2.0f * eiReflectBase * eiRay.dot(eiReflectBase) - eiRay);
+}
+
 std::pair<float, float> intersectSphere(const Vector3f& origin, const Vector3f& viewportPos, const Sphere& sphere) {
 
     Eigen::Vector3f co = origin.toEigen() - sphere.pos.toEigen();
