@@ -4,5 +4,5 @@
 #include "Sphere.h"
 #include "Scene.h"
 
-std::unique_ptr<std::pair<Sphere, float>> computeClosestInteraction(const Vector3f& origin, const Vector3f& viewportPos,  const std::vector<Sphere>& objects, float rayMinSize, float rayMaxSize);
-Vector3f reflectRay(Vector3f ray, Vector3f reflectBase);
+std::unique_ptr<std::pair<Sphere, double>> computeClosestInteraction(const Vector3d& origin, const Vector3d& viewportPos,  const std::vector<Sphere>& objects, double rayMinSize, double rayMaxSize);
+Vector3d reflectRay(Vector3d ray, Vector3d reflectBase);

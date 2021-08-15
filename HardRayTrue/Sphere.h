@@ -7,11 +7,11 @@
 class Sphere: public Object
 {
 public:
-	float radius;
+	double radius;
 	sf::Color color;
-	float specular;
-	float reflectivness;
+	double specular;
+	double reflectivness;
 	Sphere() : Object(), radius(0), color(0), specular(0), reflectivness(0) {}
-	Sphere(Vector3f pos, float radius, sf::Color color, float specular, float reflectivness) : Object(pos), radius{ radius }, color{ color }, specular{ specular }, reflectivness{ reflectivness } {}
+	Sphere(Vector3d pos, double radius, sf::Color color, double specular, double reflectivness) : Object(pos), radius{ radius }, color{ color }, specular{ specular }, reflectivness{ reflectivness } {}
 };
 

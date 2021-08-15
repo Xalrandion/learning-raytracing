@@ -1,6 +1,6 @@
 #include "Object.h"
 
-Vector3f Object::getPos()
+Vector3d Object::getPos()
 {
 	return this->pos;
 }

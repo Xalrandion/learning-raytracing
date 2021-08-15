@@ -5,12 +5,12 @@
 class Light
 {
 protected:
-	float computeSpecularIntensity(Vector3f rayDir, Vector3f targetPos, Vector3f targetNormale, Vector3f viewVector, float specularExponent) const;
+	double computeSpecularIntensity(Vector3d rayDir, Vector3d targetPos, Vector3d targetNormale, Vector3d viewVector, double specularExponent) const;
 public:
-	virtual float computeLightIntensity(Vector3f targetPos, Vector3f targetNormale, Vector3f viewVector, float specularExponent, const std::vector<Sphere> &objects) const = 0;
-	float intensity;
+	virtual double computeLightIntensity(Vector3d targetPos, Vector3d targetNormale, Vector3d viewVector, double specularExponent, const std::vector<Sphere> &objects) const = 0;
+	double intensity;
 
-	Light(float i): intensity {i} {}
+	Light(double i): intensity {i} {}
 	Light() : Light (0) {}
 	virtual ~Light() = 0 {};
 };
@@ -18,16 +18,16 @@ public:
 class AmbiantLight : public Light {
 
 public:
-	AmbiantLight(float intensity): Light(intensity) {}
-	float computeLightIntensity(Vector3f targetPos, Vector3f targetNormale, Vector3f viewVector, float specularExponent, const std::vector<Sphere>& objects) const;
+	AmbiantLight(double intensity): Light(intensity) {}
+	double computeLightIntensity(Vector3d targetPos, Vector3d targetNormale, Vector3d viewVector, double specularExponent, const std::vector<Sphere>& objects) const;
 	~AmbiantLight() {};
 };
 
 class LigthWithDirection : public Light {
 
 protected:
-	LigthWithDirection(float i): Light(i) {}
-	float calculateLightIntensityFromRayDirection(Vector3f rayDirection, Vector3f targetNormale) const;
+	LigthWithDirection(double i): Light(i) {}
+	double calculateLightIntensityFromRayDirection(Vector3d rayDirection, Vector3d targetNormale) const;
 public:
 	virtual ~LigthWithDirection() = 0 {};
 };
@@ -35,17 +35,17 @@ public:
 class PointLight : public LigthWithDirection {
 
 public:
-	Vector3f pos;
-	PointLight(Vector3f pos, float intensity) : LigthWithDirection(intensity),  pos{ pos } {}
-	float computeLightIntensity(Vector3f targetPos, Vector3f targetNormale, Vector3f viewVector, float specularExponent, const std::vector<Sphere>& objects) const;
+	Vector3d pos;
+	PointLight(Vector3d pos, double intensity) : LigthWithDirection(intensity),  pos{ pos } {}
+	double computeLightIntensity(Vector3d targetPos, Vector3d targetNormale, Vector3d viewVector, double specularExponent, const std::vector<Sphere>& objects) const;
 	~PointLight() {}
 };
 
 class DirectionalLight : public LigthWithDirection {
 
 public:
-	Vector3f direction;
-	DirectionalLight(Vector3f direction, float intensity) : LigthWithDirection(intensity), direction{ direction } {}
-	float computeLightIntensity(Vector3f targetPos, Vector3f targetNormale, Vector3f viewVector, float specularExponent, const std::vector<Sphere>& objects) const;
+	Vector3d direction;
+	DirectionalLight(Vector3d direction, double intensity) : LigthWithDirection(intensity), direction{ direction } {}
+	double computeLightIntensity(Vector3d targetPos, Vector3d targetNormale, Vector3d viewVector, double specularExponent, const std::vector<Sphere>& objects) const;
 	~DirectionalLight() {}
 };

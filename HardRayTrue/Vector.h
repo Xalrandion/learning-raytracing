@@ -14,16 +14,16 @@ public:
 	int z;
 };
 
-class Vector3f
+class Vector3d
 {
 
 public: 
-	static Vector3f fromEigen(Eigen::Vector3f v);
-	Vector3f(float _x, float _y, float _z) : x{ _x }, y{ _y }, z{ _z } {}
-	Vector3f() : Vector3f(0, 0, 0) {}
-	Eigen::Vector3f toEigen() const;
+	static Vector3d fromEigen(Eigen::Vector3d v);
+	Vector3d(double _x, double _y, double _z) : x{ _x }, y{ _y }, z{ _z } {}
+	Vector3d() : Vector3d(0, 0, 0) {}
+	Eigen::Vector3d toEigen() const;
 
-	float x;
-	float y;
-	float z;
+	double x;
+	double y;
+	double z;
 };

@@ -1,37 +1,37 @@
 #include "Calculations.h"
 #include "Constant.h"
 
-Vector3f reflectRay(Vector3f ray, Vector3f reflectBase) {
+Vector3d reflectRay(Vector3d ray, Vector3d reflectBase) {
 
     auto eiRay = ray.toEigen();
     auto eiReflectBase = reflectBase.toEigen();
-    return Vector3f::fromEigen(2.0f * eiReflectBase * eiRay.dot(eiReflectBase) - eiRay);
+    return Vector3d::fromEigen((2.0f * eiReflectBase * eiRay.dot(eiReflectBase)) - eiRay);
 }
 
-std::pair<float, float> intersectSphere(const Vector3f& origin, const Vector3f& viewportPos, const Sphere& sphere) {
+std::pair<double, double> intersectSphere(const Vector3d& origin, const Vector3d& viewportPos, const Sphere& sphere) {
 
-    Eigen::Vector3f co = origin.toEigen() - sphere.pos.toEigen();
+    Eigen::Vector3d co = origin.toEigen() - sphere.pos.toEigen();
     // ax² + bx + c  
 
-    float  a = viewportPos.toEigen().dot(viewportPos.toEigen());
-    float b = 2 * (co.dot(viewportPos.toEigen()));
-    float c = co.dot(co) - (sphere.radius * sphere.radius);
+    double  a = viewportPos.toEigen().dot(viewportPos.toEigen());
+    double b = 2 * (co.dot(viewportPos.toEigen()));
+    double c = co.dot(co) - (sphere.radius * sphere.radius);
 
     // b² - 4ac
-    float delta = (b * b) - (4 * a * c);
-    if (delta < 0) return std::pair<float, float>(RAY_MAX, RAY_MAX);
+    double delta = (b * b) - (4 * a * c);
+    if (delta < 0) return std::pair<double, double>(RAY_MAX, RAY_MAX);
 
     // solutions
-    return std::pair<float, float>((-b + sqrt(delta)) / (2 * a), (-b - sqrt(delta)) / (2 * a));
+    return std::pair<double, double>((-b + sqrt(delta)) / (2 * a), (-b - sqrt(delta)) / (2 * a));
 }
 
-bool isBeetween(float x, float min, float max) {
+bool isBeetween(double x, double min, double max) {
     return x >= min && x <= max;
 }
 
-std::unique_ptr<std::pair<Sphere, float>> computeClosestInteraction(const Vector3f& origin, const Vector3f& viewportPos, const std::vector<Sphere>& objects, float rayMinSize, float rayMaxSize) {
+std::unique_ptr<std::pair<Sphere, double>> computeClosestInteraction(const Vector3d& origin, const Vector3d& viewportPos, const std::vector<Sphere>& objects, double rayMinSize, double rayMaxSize) {
 
-    float rayClosestCollistion = rayMaxSize;
+    double rayClosestCollistion = rayMaxSize;
     Sphere closestSphere;
     auto isSphereFound = false;
 
@@ -51,6 +51,6 @@ std::unique_ptr<std::pair<Sphere, float>> computeClosestInteraction(const Vector
 
     }
 
-    if (!isSphereFound) return std::unique_ptr< std::pair<Sphere, float>>(nullptr);
-    return std::make_unique<std::pair<Sphere, float>>(std::pair<Sphere, float>(closestSphere, rayClosestCollistion));
+    if (!isSphereFound) return std::unique_ptr< std::pair<Sphere, double>>(nullptr);
+    return std::make_unique<std::pair<Sphere, double>>(std::pair<Sphere, double>(closestSphere, rayClosestCollistion));
 }

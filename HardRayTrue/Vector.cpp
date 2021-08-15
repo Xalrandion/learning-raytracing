@@ -6,12 +6,12 @@ Eigen::Vector3i Vector3::toEigen() const
 	return Eigen::Vector3i(this->x, this->y, this->z);
 }
 
-Eigen::Vector3f Vector3f::toEigen() const
+Eigen::Vector3d Vector3d::toEigen() const
 {
-	return Eigen::Vector3f(this->x, this->y, this->z);
+	return Eigen::Vector3d(this->x, this->y, this->z);
 }
 
-Vector3f Vector3f::fromEigen(Eigen::Vector3f v)
+Vector3d Vector3d::fromEigen(Eigen::Vector3d v)
 {
-	return Vector3f(v.x(), v.y(), v.z());
+	return Vector3d(v.x(), v.y(), v.z());
 }

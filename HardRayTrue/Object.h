@@ -5,11 +5,11 @@ class Object
 {
 
 public:
-	Object(): pos { Vector3f(0.0f, 0.0f, 0.0f)} {}
-	Object(const Vector3f &pos): pos{pos} {}
-	Vector3f getPos();
+	Object(): pos { Vector3d(0.0f, 0.0f, 0.0f)} {}
+	Object(const Vector3d &pos): pos{pos} {}
+	Vector3d getPos();
 public:
-	Vector3f pos;
+	Vector3d pos;
 
 };
 

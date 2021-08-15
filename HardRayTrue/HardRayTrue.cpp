@@ -18,7 +18,7 @@ void drawCanvas(sf::RenderWindow& target, const Canvas &canvas) {
     target.draw(sf::Sprite(tex));
 }
 
-sf::VideoMode getScreenPercentageMode(float percent) {
+sf::VideoMode getScreenPercentageMode(double percent) {
 
     auto fullDesktopMode = sf::VideoMode::getDesktopMode();
     auto width = (percent * fullDesktopMode.width) / 100;
@@ -27,9 +27,9 @@ sf::VideoMode getScreenPercentageMode(float percent) {
 }
 
 
-float computeLightning(Scene scene, const Vector3f &targetPos, const Vector3f &tagetNormale, const Vector3f &viewVector, float specularExponent) {
+double computeLightning(Scene scene, const Vector3d &targetPos, const Vector3d &tagetNormale, const Vector3d &viewVector, double specularExponent) {
 
-    float intensity = 0;
+    double intensity = 0;
     for (auto it = scene.lights.begin(); it != scene.lights.end(); ++it) {
         auto i = (*it)->computeLightIntensity(targetPos, tagetNormale, viewVector, specularExponent, scene.objects);
         intensity += i;
@@ -37,17 +37,18 @@ float computeLightning(Scene scene, const Vector3f &targetPos, const Vector3f &t
     return intensity;
 }
 
-sf::Uint8 clampColorComponent(float colorComponent) {
-    return colorComponent < 0 ? 0 : colorComponent > 255 ? 255 : colorComponent;
+sf::Uint8 clampColorComponent(double colorComponent) {
+    return floor(colorComponent < 0 ? 0 : colorComponent > 255 ? 255 : colorComponent);
 }
 
-sf::Color generateClampedColor(float r, float g, float b) {
+sf::Color generateClampedColor(double r, double g, double b) {
 
     return sf::Color(clampColorComponent(r), clampColorComponent(g), clampColorComponent(b));
 }
 
+Eigen::Vector3i col;
 
-sf::Color traceRay(const Vector3f& origin, const Vector3f& viewportPos, const Scene &scene, float rayMinSize, float rayMaxSize, int depth) {
+sf::Color traceRay(const Vector3d& origin, const Vector3d& viewportPos, const Scene &scene, double rayMinSize, double rayMaxSize, int depth) {
 
 
     auto closestInteraction = computeClosestInteraction(origin, viewportPos, scene.objects, rayMinSize, rayMaxSize);
@@ -57,39 +58,40 @@ sf::Color traceRay(const Vector3f& origin, const Vector3f& viewportPos, const Sc
     auto closestSphere = closestInteraction->first;
 
     auto eiViewportPos = viewportPos.toEigen();
-    auto eiClosestSphereIntersesctPos = origin.toEigen() + ((float)rayClosestCollistion * eiViewportPos);
+    auto eiClosestSphereIntersesctPos = origin.toEigen() + ((double)rayClosestCollistion * eiViewportPos);
     auto eiClosestSphereNormaleAtPos = eiClosestSphereIntersesctPos - closestSphere.pos.toEigen();
     auto eiClosestSphereNormaleAtPosNormalized =  eiClosestSphereNormaleAtPos / eiClosestSphereNormaleAtPos.norm();
 
     
     sf::Color baseColor(closestSphere.color);
     
-    auto intensity = computeLightning(scene, Vector3f::fromEigen(eiClosestSphereIntersesctPos), Vector3f::fromEigen(eiClosestSphereNormaleAtPosNormalized), Vector3f::fromEigen(eiViewportPos * -1), closestSphere.specular);
-    sf::Color localColor = generateClampedColor((float)baseColor.r * intensity, (float)baseColor.g * intensity, (float)baseColor.b * intensity);
+    auto intensity = computeLightning(scene, Vector3d::fromEigen(eiClosestSphereIntersesctPos), Vector3d::fromEigen(eiClosestSphereNormaleAtPosNormalized), Vector3d::fromEigen(eiViewportPos * -1), closestSphere.specular);
+    sf::Color localColor = generateClampedColor((double)baseColor.r * intensity, (double)baseColor.g * intensity, (double)baseColor.b * intensity);
 
     if (closestSphere.reflectivness <= 0 || depth <= 0) return localColor;
    
-    auto reflectedColor = traceRay(Vector3f::fromEigen(eiClosestSphereIntersesctPos),
-        reflectRay(Vector3f::fromEigen(viewportPos.toEigen() * -1), Vector3f::fromEigen(eiClosestSphereNormaleAtPosNormalized)),
+    auto reflectedColor = traceRay(Vector3d::fromEigen(eiClosestSphereIntersesctPos),
+        reflectRay(Vector3d::fromEigen(eiViewportPos * -1), Vector3d::fromEigen(eiClosestSphereNormaleAtPosNormalized)),
         scene,
-        0.001f, 
+        0.001, 
         RAY_MAX, 
         depth - 1);
-    return generateClampedColor(
-        (float)localColor.r * (1.0f - closestSphere.reflectivness) + (float)reflectedColor.r * closestSphere.reflectivness,
-        (float)localColor.g * (1.0f - closestSphere.reflectivness) + (float)reflectedColor.g * closestSphere.reflectivness,
-        (float)localColor.b * (1.0f - closestSphere.reflectivness) + (float)reflectedColor.b * closestSphere.reflectivness
-        );
+    auto r = ((double)localColor.r * (1.0f - closestSphere.reflectivness)) + ((double)reflectedColor.r * closestSphere.reflectivness);
+    auto g = ((double)localColor.g * (1.0f - closestSphere.reflectivness)) + ((double)reflectedColor.g * closestSphere.reflectivness);
+    auto b = ((double)localColor.b * (1.0f - closestSphere.reflectivness)) + ((double)reflectedColor.b * closestSphere.reflectivness);
+    
+    auto clamped = generateClampedColor(r, g, b);
+    return clamped; 
 }
 
-void drawScene(Canvas &canvas, const Viewport &viewport, const Vector3f &origin, const Scene &scene) {
+void drawScene(Canvas &canvas, const Viewport &viewport, const Vector3d &origin, const Scene &scene) {
 
     auto currentCanvasPos = sf::Vector2f(0, 0); 
-    for (currentCanvasPos.x = ((float)canvas.getSize().x / 2) * -1; currentCanvasPos.x < canvas.getSize().x / 2; currentCanvasPos.x++) {
-        for (currentCanvasPos.y = ((float)canvas.getSize().y / 2) * -1; currentCanvasPos.y < canvas.getSize().y / 2; currentCanvasPos.y++) {
+    for (currentCanvasPos.x = ((double)canvas.getSize().x / 2) * -1; currentCanvasPos.x < canvas.getSize().x / 2; currentCanvasPos.x++) {
+        for (currentCanvasPos.y = ((double)canvas.getSize().y / 2) * -1; currentCanvasPos.y < canvas.getSize().y / 2; currentCanvasPos.y++) {
 
             auto viewportPos = viewport.getPosFromCanvasPos(canvas, currentCanvasPos);
-            auto color = traceRay(origin, viewportPos, scene, 1, RAY_MAX, 3);
+            auto color = traceRay(origin, viewportPos, scene, 1, RAY_MAX, 5);
             canvas.putPixel(currentCanvasPos, color); 
             //std::cout << "Pixex [" << currentCanvasPos.x << "; " << currentCanvasPos.y << "] drawn." << std::endl;
         }
@@ -104,16 +106,16 @@ int main()
     Canvas canvas(window.getSize().x, window.getSize().y);
 
     Viewport viewport(sf::Vector2f(1, 1), 1);
-    Vector3f origin(0, 0, 0);
+    Vector3d origin(0, 0, 0);
     Scene scene; 
 
-    scene.objects.push_back(Sphere(Vector3f(0, -1, 3), 1, sf::Color::Red, 500, 0.2));
-    scene.objects.push_back(Sphere(Vector3f(2, 0, 4), 1, sf::Color::Blue, 500, 0.3));
-    scene.objects.push_back(Sphere(Vector3f(-2, 0, 4), 1, sf::Color::Green, 10, 0.4));
-    scene.objects.push_back(Sphere(Vector3f(0, -5001, 0), 5000, sf::Color::Yellow, 1000, 0.5));
+    scene.objects.push_back(Sphere(Vector3d(0, -1, 3), 1, sf::Color::Red, 500, 0.2));
+    scene.objects.push_back(Sphere(Vector3d(2, 0, 4), 1, sf::Color::Blue, 500, 0.3));
+    scene.objects.push_back(Sphere(Vector3d(-2, 0, 4), 1, sf::Color::Green, 10, 0.4));
+    scene.objects.push_back(Sphere(Vector3d(0, -5001, 0), 5000, sf::Color::Magenta, 1000, 0.5));
     scene.lights.push_back(new AmbiantLight(0.2));
-    scene.lights.push_back(new PointLight(Vector3f(2, 1, 0), 0.6));
-    scene.lights.push_back(new DirectionalLight(Vector3f(1, 4, 4), 0.2));
+    scene.lights.push_back(new PointLight(Vector3d(2, 1, 0), 0.6));
+    scene.lights.push_back(new DirectionalLight(Vector3d(1, 4, 4), 0.2));
    
 
     canvas.clear();

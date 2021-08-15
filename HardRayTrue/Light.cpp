@@ -4,7 +4,7 @@
 #include "Constant.h"
 
 
-float Light::computeSpecularIntensity(Vector3f rayDir, Vector3f targetPos, Vector3f targetNormale, Vector3f viewVector, float specularExponent) const
+double Light::computeSpecularIntensity(Vector3d rayDir, Vector3d targetPos, Vector3d targetNormale, Vector3d viewVector, double specularExponent) const
 {
 	if (specularExponent < 0) return 0;
 
@@ -18,12 +18,12 @@ float Light::computeSpecularIntensity(Vector3f rayDir, Vector3f targetPos, Vecto
 	return intensity * p;
 }
 
-float AmbiantLight::computeLightIntensity(Vector3f targetPos, Vector3f targetNormale, Vector3f viewVector, float specularExponent, const std::vector<Sphere>& objects) const
+double AmbiantLight::computeLightIntensity(Vector3d targetPos, Vector3d targetNormale, Vector3d viewVector, double specularExponent, const std::vector<Sphere>& objects) const
 {
 	return intensity;
 }
 
-float LigthWithDirection::calculateLightIntensityFromRayDirection(Vector3f rayDirection, Vector3f targetNormale) const
+double LigthWithDirection::calculateLightIntensityFromRayDirection(Vector3d rayDirection, Vector3d targetNormale) const
 {
 	auto rdir_dot_normale = targetNormale.toEigen().dot(rayDirection.toEigen());
 	if (rdir_dot_normale <= 0) return 0;
@@ -31,17 +31,17 @@ float LigthWithDirection::calculateLightIntensityFromRayDirection(Vector3f rayDi
 	return intensity * rdir_dot_normale / (rayDirection.toEigen().norm() * targetNormale.toEigen().norm());
 }
 
-float PointLight::computeLightIntensity(Vector3f targetPos, Vector3f targetNormale, Vector3f viewVector, float specularExponent, const std::vector<Sphere>& objects) const {
+double PointLight::computeLightIntensity(Vector3d targetPos, Vector3d targetNormale, Vector3d viewVector, double specularExponent, const std::vector<Sphere>& objects) const {
 
 	auto eigenRayDir = pos.toEigen() - targetPos.toEigen();
-	auto shadowProducer = computeClosestInteraction(targetPos, Vector3f::fromEigen(eigenRayDir), objects, 0.001, 1);
+	auto shadowProducer = computeClosestInteraction(targetPos, Vector3d::fromEigen(eigenRayDir), objects, 0.001, 1);
 	if (shadowProducer)
 		return 0;
-	auto i  = calculateLightIntensityFromRayDirection(Vector3f::fromEigen(eigenRayDir), targetNormale) + computeSpecularIntensity(Vector3f::fromEigen(eigenRayDir), targetPos, targetNormale, viewVector, specularExponent);
+	auto i  = calculateLightIntensityFromRayDirection(Vector3d::fromEigen(eigenRayDir), targetNormale) + computeSpecularIntensity(Vector3d::fromEigen(eigenRayDir), targetPos, targetNormale, viewVector, specularExponent);
 	return i;
 }
 
-float DirectionalLight::computeLightIntensity(Vector3f targetPos, Vector3f targetNormale, Vector3f viewVector, float specularExponent, const std::vector<Sphere>& objects) const {
+double DirectionalLight::computeLightIntensity(Vector3d targetPos, Vector3d targetNormale, Vector3d viewVector, double specularExponent, const std::vector<Sphere>& objects) const {
 
 	auto shadowProducer = computeClosestInteraction(targetPos, direction, objects, 0.001, RAY_MAX);
 	if (shadowProducer)
